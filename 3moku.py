@@ -5,7 +5,6 @@ animal = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4
 put_add = []
 status = 1
 cnt_stone = 0
-cnt_animal = 0
 
 random.shuffle(animal)
 num = 0
@@ -42,31 +41,75 @@ def release_animal(n):
 
 def judge(x, y, z):
     global cnt_stone
-    global cnt_animal
+    #----------------------------------------------------
     #↑方向の探索
     for i in range(x, max(-1,x-3), -1):
         if board[i][y][1] == z:
             cnt_stone += 1
         else:
             cnt_stone = 0
-            continue
+            break
     if cnt_stone == 3:
         for i in range(x, max(-1,x-3), -1):
             if board[i][y][0] == 0:
-                print(status)
-                print(type(status))
                 return 3
             else:
-                print(status)
-                print(type(status))
                 return 4
+    cnt_stone = 0
+    #-----------------------------------------------------
+    #↓方向の探索
+    for i in range(x, min(6,x+3), 1):
+        if board[i][y][1] == z:
+            cnt_stone += 1
+        else:
+            cnt_stone = 0
+            break
+    if cnt_stone == 3:
+        for i in range(x, min(6,x+3), 1):
+            if board[i][y][0] == 0:
+                return 3
+            else:
+                return 4
+    cnt_stone = 0
+    #-----------------------------------------------------
+    #→方向の探索
+    for i in range(y, min(6,y+3), 1):
+        if board[x][i][1] == z:
+            cnt_stone += 1
+        else:
+            cnt_stone = 0
+            break
+    if cnt_stone == 3:
+        for i in range(y, min(6,y+3), 1):
+            if board[x][i][0] == 0:
+                return 3
+            else:
+                return 4
+    cnt_stone = 0
+    #-----------------------------------------------------
+    #←方向の探索
+    for i in range(y, max(-1,y-3), -1):
+        if board[x][i][1] == z:
+            cnt_stone += 1
+        else:
+            cnt_stone = 0
+            break
+    if cnt_stone == 3:
+        for i in range(y, max(-1,y-3), -1):
+            if board[x][i][0] == 0:
+                return 3
+            else:
+                return 4
+    cnt_stone = 0
+    #-----------------------------------------------------
+    #↗方向の探索
     print(status)
     print(type(status))
     return z
     
 while status < 3:
     print("")
-    print("player" + str(status) + ": select Option")
+    print("player" + str(status) + ": select option")
     print("1:put stone, 2:release three animals, 3:release one kind of animals")
     opt = int(input())
     if opt == 1:
