@@ -13,6 +13,7 @@ num = 1
 vector_h = 0
 vector_w = 0
 mode = 0
+turn = 1
 
 
 random.shuffle(animal)
@@ -29,6 +30,12 @@ for i in range(2, 8):
     print('')
 
 # ---------------------関数------------------------------------
+def hoge(n):
+    for i in range(6):
+        for j in range(6):
+            if board[i][j][1] == 1:
+                board[i][j][1] = n
+    return board
 
 def can_put(h, w):
     if (h <= 1 or h >= 8 or w <= 1 or w >= 8):
@@ -41,6 +48,8 @@ def can_put(h, w):
         return(True)
 
 def change(n):
+    global turn
+    turn += 1
     if n == 1:
         return 2
     elif n == 2:
@@ -125,6 +134,13 @@ def release_three(x, y):
     board[x][y][0] = 0
     return board
 
+def can_release_animal(n):
+    for i in range(6):
+        for i in range(6):
+            if board[i][j][0] == n:
+                return True
+    return False
+
 def release_animal(n):
     for i in range(6):
         for j in range(6):
@@ -203,11 +219,16 @@ def judge(x, y, z):
 # ---------------------関数fin---------------------------------
 
 while status < 3:
-    flag = False
-    print("")
+    print("turn", turn)
     print("player" + str(status) + ": select option")
+    if turn == 2:
+        print("0:change first put")
     print("1:put stone, 2:release three animals, 3:release one kind of animals")
     opt = int(input())
+    if (turn == 2 and opt == 0):
+        print("入れ替えます")
+        board = hoge(status)
+        status = change(status)
     if opt == 1:
         print("put stone")
         put_x, put_y = input().split()
@@ -237,8 +258,11 @@ while status < 3:
     elif opt == 3:
         print("select release animal")
         select_animal = int(input())
-        board = release_animal(select_animal)
-        status = change(status)
+        if can_release_animal == True:
+            board = release_animal(select_animal)
+            status = change(status)
+        else:
+            print("中に誰もいませんよ")
         
     elif opt == 4:
         print("debug mode 3toukaihou")
@@ -281,8 +305,5 @@ while status < 3:
         for j in range(2, 8):
             print(board[i][j], end='')
         print('')
-
-    print(type(status))
-    print(status)
 
 print("game end")
