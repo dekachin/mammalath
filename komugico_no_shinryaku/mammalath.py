@@ -18,19 +18,19 @@ class Animal(IntEnum):
             str: 各値に割り振られた文字列
         """
         if self.value == Animal.EMPTY:
-            return " "
+            return "　"
         if self.value == Animal.RED:
-            return "1"
+            return "１"
         if self.value == Animal.YLW:
-            return "2"
+            return "２"
         if self.value == Animal.BLE:
-            return "3"
+            return "３"
         if self.value == Animal.GRN:
-            return "4"
+            return "４"
         if self.value == Animal.ORG:
-            return "5"
+            return "５"
         if self.value == Animal.PPL:
-            return "6"
+            return "６"
     
     @staticmethod
     def animal_list():
@@ -61,7 +61,7 @@ class Stone(IntEnum):
             str: 各値に割り振られた文字列
         """
         if self.value == Stone.EMPTY:
-            return "*"
+            return "・"
         if self.value == Stone.PLAYER1:
             return "★"
         if self.value == Stone.PLAYER2:
@@ -109,9 +109,7 @@ class Mammalath(object):
         print("NEXT PLAYER  >>> " + str(self._player))
 
         # 盤面表示
-        print("\t+=======================================================+")
         self._board.show_cells()
-        print("\t+=======================================================+")
 
         # 操作処理
         success = self.user_operation()
@@ -127,10 +125,10 @@ class Mammalath(object):
                 self._player = Stone.PLAYER1
         else:
             # 操作失敗
-            print("**********************************************************")
-            print("************************ FAILED **************************")
-            print("************************ TRY AGAIN ***********************")
-            print("**********************************************************")
+            print("\t>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            print("\t>>>>>>>>>>>>>>>>>>>>> FAILED!! <<<<<<<<<<<<<<<<<<<<<<<<<<")
+            print("\t>>>>>>>>>>>>>>>>>>> TRY AGAIN!! <<<<<<<<<<<<<<<<<<<<<<<<<")
+            print("\t>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
     def user_operation(self):
         """ ユーザー操作関数
@@ -278,12 +276,14 @@ class Board(object):
     def show_cells(self):
         """ 盤面表示関数
         """
+        print("\t+=======================================================+")
         for y in range(6):
             print("\t|", end="\t")
             for x in range(6):
                 cell = self._cells[y][x]
                 print(str(cell.animal) + "-" + str(cell.stone), end="\t")
             print("|", end="\n")
+        print("\t+=======================================================+")
     
     def put_stone(self, x, y, stone):
         """ 石を置く関数
