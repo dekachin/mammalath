@@ -116,6 +116,8 @@ class Mammalath(object):
         
         # 走査の成功判定
         if success:
+            # 終了判定
+            self.judge_game_end()
             # ターン更新
             self._turn = self._turn + 1
             # 手番入れ替え
@@ -141,7 +143,11 @@ class Mammalath(object):
 
         # モード選択
         stone = self._player
-        print("SELECT MODE  >>>  1: Put stone, 2; Remove 3 animals, 3: Remove specific animal")
+        if self._turn == 2:
+            # 2ターン目のみ手番交換を表示
+            print("SELECT MODE  >>>  1: Put stone, 2; Remove 3 animals, 3: Remove specific animal, 4: Exchange turn")
+        else:
+            print("SELECT MODE  >>>  1: Put stone, 2; Remove 3 animals, 3: Remove specific animal")
         mode = int(input())
 
         # 石置き
@@ -156,7 +162,7 @@ class Mammalath(object):
             x, y = map(int, input().split())
             print("SELECT DIR   >>> ↑:1, ↗:2, →:3, ↘:4, ↓:5, ↙:6, ←:7, ↖:8")
             idx = int(input())
-            success = self.remove_3_animals(x-1, y-1, self.VEC[idx-1])
+            success = self.remove_3_animals(x-1, y-1, Mammalath.VEC[idx-1])
 
         # 1種開放
         if mode == Mammalath.MODE_REMOVE_SPECIFIC_ANIMAL:
@@ -237,17 +243,58 @@ class Mammalath(object):
             return False
     
     def turn_exchange(self):
-        """ 手番入れ替え関数（未実装）
+        """ 手番交換関数
+        
+        Returns:
+            bool: 手番交換の成否判定
         """
-        return False
+        positions = self._board.get_pos_stone(Stone.PLAYER1)
+        if len(positions) == 1:
+            pos = positions[0]
+            self._board.put_stone(pos[0], pos[1], Stone.PLAYER2, force=True)
+            return True
+        else:
+            return False
 
-    def judge_endgame(self):
-        """ ゲームの終了判定（未実装）
+    def judge_game_end(self):
+        """ ゲームの終了判定
         """
-        self._is_game_end = False
+        winner = None
+        if self._board.judge_lose(self._player):
+            # 敗北条件が成立
+            self._is_game_end = True
+            if self._player == Stone.PLAYER1:
+                winner = Stone.PLAYER2
+            else:
+                winner = Stone.PLAYER1
+        else:
+            # 敗北条件が非成立
+            if self._board.judge_win(self._player):
+                # 勝利条件が成立
+                self._is_game_end = True
+                winner = self._player
+            else:
+                # 勝利も敗北も非成立
+                return
+        # ゲーム終了
+        print()
+        self._board.show_cells()
+        print()
+        print("\t>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+        print("\t>>>>>>>>>>>>>>>>>>>>> GAME END!! <<<<<<<<<<<<<<<<<<<<<<<<")
+        print("\t>>>>>>>>>>>>>>>>>>> WINNER: " + str(winner) +"  <<<<<<<<<<<<<<<<<<<<<<<<<<")
+        print("\t>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
 # 盤管理クラス
 class Board(object):
+    # 勝利・敗北判定用方向定義リスト
+    JUDGE_CONDITIONS = [
+        {"start": (0, 0), "end": (4, 6), "vec": (1, 0)},    # →
+        {"start": (0, 0), "end": (6, 4), "vec": (0, 1)},    # ↓
+        {"start": (0, 0), "end": (4, 4), "vec": (1, 1)},    # ↘
+        {"start": (2, 0), "end": (6, 4), "vec": (-1, 1)},   # ↙
+    ]
+
     def __init__(self):
         """ 初期化関数
         """
@@ -285,7 +332,25 @@ class Board(object):
             print("|", end="\n")
         print("\t+=======================================================+")
     
-    def put_stone(self, x, y, stone):
+    def get_pos_stone(self, stone):
+        """ 特定プレイヤーの石の位置を取得
+
+        Args:
+            stone (Stone): プレイヤー情報
+        
+        Returns:
+            list[[int, int]]: 石の座標リスト
+        """
+        # 空の座標リスト
+        positions = []
+        for y in range(6):
+            for x in range(6):
+                cell = self._cells[y][x]
+                if cell.stone == stone:
+                    positions.append([x, y])
+        return positions
+
+    def put_stone(self, x, y, stone, force=False):
         """ 石を置く関数
 
         Args:
@@ -304,7 +369,13 @@ class Board(object):
                 return True
             else:
                 # 石があった場合
-                return False
+                if force:
+                    # 強制配置処理の場合（手番交換専用）
+                    self._cells[y][x].put_stone(stone)
+                    return True
+                else:
+                    # 通常処理の場合
+                    return False
         else:
             # 座標が盤外の場合
             return False
@@ -379,6 +450,100 @@ class Board(object):
                     positions.append([x, y])
         # 座標リスト返却
         return positions
+    
+    def judge_lose(self, stone):
+        """ 敗北判定
+
+        Args:
+            stone (Stone): プレイヤー情報
+
+        Returns:
+            bool: 敗北状況（True: 敗北, False: 敗北ではない）
+        """
+        judge_board = self.__convert_to_judge_board(stone)
+        for judge_condition in Board.JUDGE_CONDITIONS:
+            (start_x, start_y) = judge_condition["start"]
+            (end_x, end_y) = judge_condition["end"]
+            (dx, dy) = judge_condition["vec"]
+            for y in range(start_y, end_y):
+                for x in range(start_x, end_x):
+                    sum = 0
+                    for d in range(3):
+                        sum = sum + judge_board[y + d * dy][x + d * dx]
+                    if sum == 3 or sum == 6 or sum == 9:
+                        # 敗北条件が成立
+                        return True
+                    else:
+                        # 敗北条件が非成立
+                        continue
+        # 敗北条件がすべて非成立
+        return False
+
+    
+    def judge_win(self, stone):
+        """ 勝利判定
+
+        Args:
+            stone (Stone): プレイヤー情報
+
+        Returns:
+            bool: 勝利判定（True: 勝利, False: 勝利ではない）
+        """
+        judge_board = self.__convert_to_judge_board(stone)
+        for judge_condition in Board.JUDGE_CONDITIONS:
+            (start_x, start_y) = judge_condition["start"]
+            (end_x, end_y) = judge_condition["end"]
+            (dx, dy) = judge_condition["vec"]
+            for y in range(start_y, end_y):
+                for x in range(start_x, end_x):
+                    sum = 0
+                    for d in range(3):
+                        sum = sum + judge_board[y + d * dy][x + d * dx]
+                    if sum == 0:
+                        # 勝利条件が成立
+                        return True
+                    else:
+                        # 勝利条件が非成立
+                        continue
+        # 勝利条件がすべて非成立
+        return False
+
+    def __convert_to_judge_board(self, stone):
+        """ 敗北，勝利判定用
+
+        数値定義を
+            -1  石なし
+            0   石あり・開放済み
+            3   石あり・未開放
+        とすると，連続した3マスを加算したときに
+            0        【勝利】すべて石あり・すべて解放済み
+            3,6,9    【敗北】すべて石あり・未開放が混ざっている
+            上記以外 【なし】石なしが含まれる
+        となり，勝利と敗北の判定ができるので，上記定義に基づいて変換を行う．
+
+        Args:
+            stone (Stone): プレイヤー情報
+
+        Returns:
+            [[int]]: 判定用配列（-1: 石なし，0:石あり・解放済み, 3:石あり・未開放）
+        """
+        # 空の配列作成
+        judge_board = [[None for _ in range(6)] for _ in range(6)]
+        for y in range(6):
+            for x in range(6):
+                if self._cells[y][x].stone == stone:
+                    if self._cells[y][x].animal == Animal.EMPTY:
+                        # 石あり・解放済み
+                        judge_board[y][x] = 0
+                    else:
+                        # 石あり・未開放
+                        judge_board[y][x] = 3
+                else:
+                    # 石なし
+                    judge_board[y][x] = -1
+        # 配列返却
+        return judge_board
+
 
 # マス目管理クラス
 class Cell(object):
