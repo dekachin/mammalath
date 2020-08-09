@@ -3,13 +3,13 @@ from enum import IntEnum
 
 # 動物定義
 class Animal(IntEnum):
-    EMPTY = 0
-    RED = 1
-    YLW = 2
-    BLE = 3
-    GRN = 4
-    ORG = 5
-    PPL = 6
+    EMPTY = 1
+    RED = 19
+    YLW = 29
+    BLE = 39
+    GRN = 49
+    ORG = 59
+    PPL = 69
     
     def __str__(self):
         """ 文字列定義
@@ -52,7 +52,7 @@ class Animal(IntEnum):
 class Stone(IntEnum):
     EMPTY = 0
     PLAYER1 = 1
-    PLAYER2 = 2
+    PLAYER2 = -1
 
     def __str__(self):
         """ 文字列定義
@@ -460,7 +460,6 @@ class Board(object):
         Returns:
             bool: 敗北状況（True: 敗北, False: 敗北ではない）
         """
-        judge_board = self.__convert_to_judge_board(stone)
         for judge_condition in Board.JUDGE_CONDITIONS:
             (start_x, start_y) = judge_condition["start"]
             (end_x, end_y) = judge_condition["end"]
@@ -469,8 +468,8 @@ class Board(object):
                 for x in range(start_x, end_x):
                     sum = 0
                     for d in range(3):
-                        sum = sum + judge_board[y + d * dy][x + d * dx]
-                    if sum == 3 or sum == 6 or sum == 9:
+                        sum = sum + self._cells[y + d * dy][x + d * dx].judge_value(stone)
+                    if (sum / 9 + sum % 9) == 3:
                         # 敗北条件が成立
                         return True
                     else:
@@ -489,7 +488,6 @@ class Board(object):
         Returns:
             bool: 勝利判定（True: 勝利, False: 勝利ではない）
         """
-        judge_board = self.__convert_to_judge_board(stone)
         for judge_condition in Board.JUDGE_CONDITIONS:
             (start_x, start_y) = judge_condition["start"]
             (end_x, end_y) = judge_condition["end"]
@@ -498,8 +496,8 @@ class Board(object):
                 for x in range(start_x, end_x):
                     sum = 0
                     for d in range(3):
-                        sum = sum + judge_board[y + d * dy][x + d * dx]
-                    if sum == 0:
+                        sum = sum + self._cells[y + d * dy][x + d * dx].judge_value(stone)
+                    if sum == 3:
                         # 勝利条件が成立
                         return True
                     else:
@@ -507,42 +505,6 @@ class Board(object):
                         continue
         # 勝利条件がすべて非成立
         return False
-
-    def __convert_to_judge_board(self, stone):
-        """ 敗北，勝利判定用
-
-        数値定義を
-            -1  石なし
-            0   石あり・開放済み
-            3   石あり・未開放
-        とすると，連続した3マスを加算したときに
-            0        【勝利】すべて石あり・すべて解放済み
-            3,6,9    【敗北】すべて石あり・未開放が混ざっている
-            上記以外 【なし】石なしが含まれる
-        となり，勝利と敗北の判定ができるので，上記定義に基づいて変換を行う．
-
-        Args:
-            stone (Stone): プレイヤー情報
-
-        Returns:
-            [[int]]: 判定用配列（-1: 石なし，0:石あり・解放済み, 3:石あり・未開放）
-        """
-        # 空の配列作成
-        judge_board = [[None for _ in range(6)] for _ in range(6)]
-        for y in range(6):
-            for x in range(6):
-                if self._cells[y][x].stone == stone:
-                    if self._cells[y][x].animal == Animal.EMPTY:
-                        # 石あり・解放済み
-                        judge_board[y][x] = 0
-                    else:
-                        # 石あり・未開放
-                        judge_board[y][x] = 3
-                else:
-                    # 石なし
-                    judge_board[y][x] = -1
-        # 配列返却
-        return judge_board
 
 
 # マス目管理クラス
@@ -560,6 +522,9 @@ class Cell(object):
     @property
     def stone(self):
         return self._stone
+    
+    def judge_value(self, stone):
+        return int(self._animal) % 10 * int(self._stone) * int(stone)
 
     def is_stone_empty(self):
         """ 石が置いていないか確認する
