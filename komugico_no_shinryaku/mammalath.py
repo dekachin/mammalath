@@ -114,7 +114,7 @@ class Mammalath(object):
         # 操作処理
         success = self.user_operation()
         
-        # 走査の成功判定
+        # 操作の成功判定
         if success:
             # 終了判定
             self.judge_game_end()
